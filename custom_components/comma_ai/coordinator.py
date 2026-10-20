@@ -49,6 +49,9 @@ class AthenaData(TypedDict):
     car_running: bool | None
 
 
+NO_ATHENA_DATA = AthenaData(car_battery_voltage=None, car_running=None)
+
+
 class CommaCoordinatorData(TypedDict):
     """Type for coordinator data."""
 
@@ -121,9 +124,7 @@ class CommaDataUpdateCoordinator(DataUpdateCoordinator[CommaCoordinatorData]):
                 dongle_id = device["dongle_id"]
                 stats = stats_tasks[dongle_id].result()
                 location = location_tasks[dongle_id].result()
-                athena = self._athena_cache.get(
-                    dongle_id, AthenaData(car_battery_voltage=None, car_running=None)
-                )
+                athena = self._athena_cache.get(dongle_id, NO_ATHENA_DATA)
                 
                 devices[dongle_id] = CommaDevice(
                     dongle_id=dongle_id,
@@ -175,13 +176,15 @@ class CommaDataUpdateCoordinator(DataUpdateCoordinator[CommaCoordinatorData]):
     async def _get_athena_data(self, dongle_id: str) -> AthenaData:
         """Get live data from the device, all None if it's offline."""
         try:
-            device_state = await self.api_client.get_athena_message(dongle_id, "deviceState")
-            panda_states = await self.api_client.get_athena_message(dongle_id, "pandaStates")
+            device_state, panda_states = await asyncio.gather(
+                self.api_client.get_athena_message(dongle_id, "deviceState"),
+                self.api_client.get_athena_message(dongle_id, "pandaStates"),
+            )
         except CommaAuthError:
             raise
         except Exception:
             _LOGGER.debug("Could not reach device %s via athena", dongle_id)
-            return AthenaData(car_battery_voltage=None, car_running=None)
+            return NO_ATHENA_DATA
 
         return AthenaData(
             car_battery_voltage=panda_states[0]["voltage"] / 1000 if panda_states else None,
