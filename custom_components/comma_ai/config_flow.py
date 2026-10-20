@@ -46,7 +46,7 @@ class CommaConfigFlow(ConfigFlow, domain=DOMAIN):
         )
         try:
             profile = await api_client.get_profile()
-            self.username = profile.get("username", "Unknown")
+            self.username = profile.get("username") or profile.get("email") or profile["id"]
             _LOGGER.debug("Successfully authenticated as: %s", self.username)
         except CommaAPIError as exc:
             _LOGGER.error("Authentication failed: %s", exc)
