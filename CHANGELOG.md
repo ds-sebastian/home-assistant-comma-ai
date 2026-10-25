@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Requires Home Assistant 2025.12 or newer (for aiortc's PyAV requirement)
 
 ### Fixed
+- Distance sensors were 1.6x too low: comma's stats API reports miles, not kilometers. They now follow the Home Assistant unit system instead of always showing miles (bscholer/home-assistant-comma-ai#4). Existing installs keep their current display unit; change it in the entity settings if you want km
 - API errors raised inside the coordinator's task group are now reported correctly (bscholer/home-assistant-comma-ai#7)
 - Accounts without a username fall back to email or user ID for the entry title (bscholer/home-assistant-comma-ai#7)
 - Removed the deprecated `battery_level` override from the device tracker, unsupported from Home Assistant 2027.7 (bscholer/home-assistant-comma-ai#5, bscholer/home-assistant-comma-ai#6)
