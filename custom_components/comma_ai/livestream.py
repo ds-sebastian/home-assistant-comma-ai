@@ -238,6 +238,9 @@ class CommaLiveStream:
                 return None
             # keep asking, so the camera gets switched to once allowed
             self._request(camera)
+            if self._task is None or self._task.done():
+                # the stream failed and is backing off; no frames are coming
+                return None
             with contextlib.suppress(TimeoutError):
                 async with asyncio.timeout(min(remaining, 1)):
                     await self._frame_event.wait()
@@ -394,8 +397,15 @@ class CommaLiveStream:
         await pc.setRemoteDescription(
             RTCSessionDescription(sdp=result["sdp"], type="answer")
         )
-        async with asyncio.timeout(CONNECT_TIMEOUT):
-            await connected.wait()
+        try:
+            async with asyncio.timeout(CONNECT_TIMEOUT):
+                await connected.wait()
+        except TimeoutError:
+            # the device answered, so signaling worked but no ICE path was found
+            raise CommaStreamError(
+                "Device answered but no WebRTC connection could be made "
+                "(check that UDP to the device or TURN server isn't blocked)"
+            ) from None
 
         _LOGGER.debug("Live stream for %s connected", self.dongle_id)
         self.last_error = None
