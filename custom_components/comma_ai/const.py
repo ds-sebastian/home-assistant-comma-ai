@@ -7,7 +7,12 @@ from typing import Final
 from homeassistant.const import Platform
 
 DOMAIN: Final = "comma_ai"
-PLATFORMS = [Platform.SENSOR, Platform.DEVICE_TRACKER, Platform.CAMERA]
+PLATFORMS = [
+    Platform.BINARY_SENSOR,
+    Platform.SENSOR,
+    Platform.DEVICE_TRACKER,
+    Platform.CAMERA,
+]
 
 CONF_JWT_TOKEN: Final = "jwt_token"
 CONF_IGNORE_NON_OWNED: Final = "ignore_non_owned"
@@ -17,6 +22,7 @@ ATHENA_BASE_URL: Final = "https://athena.comma.ai"
 
 # Update interval in seconds
 UPDATE_INTERVAL: Final = 60
+ATHENA_UPDATE_INTERVAL: Final = 300
 
 # Live stream camera names, as understood by openpilot's webrtcd
 CAMERA_ROAD: Final = "wideRoad"

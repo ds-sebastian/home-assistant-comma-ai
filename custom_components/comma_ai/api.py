@@ -19,6 +19,10 @@ class CommaAPIError(Exception):
     """Raised when the API returns an error."""
 
 
+class CommaAuthError(CommaAPIError):
+    """Raised when the JWT token is invalid or expired."""
+
+
 class CommaAPIClient:
     """comma.ai API Client."""
 
@@ -27,6 +31,7 @@ class CommaAPIClient:
         self.jwt_token = jwt_token
         self.session = session
         self.base_url = "https://api.commadotai.com"
+        self.athena_url = ATHENA_BASE_URL
 
     @property
     def _headers(self) -> dict[str, str]:
@@ -49,7 +54,7 @@ class CommaAPIClient:
         )
         
         if response.status == 401:
-            raise CommaAPIError("Invalid JWT token")
+            raise CommaAuthError("Invalid JWT token")
         elif response.status == 403:
             raise CommaAPIError("Access forbidden")
         elif response.status == 404:
@@ -97,17 +102,30 @@ class CommaAPIClient:
             "params": params or {},
         }
         response = await self.session.post(
-            f"{ATHENA_BASE_URL}/{dongle_id}",
+            f"{self.athena_url}/{dongle_id}",
             json=payload,
             headers=self._headers,
             timeout=ClientTimeout(total=timeout),
         )
 
         if response.status == 401:
-            raise CommaAPIError("Invalid JWT token")
+            raise CommaAuthError("Invalid JWT token")
         if response.status >= 400:
             # athena answers 404 "Device not registered" when the device is offline
             body = (await response.text())[:200]
             raise CommaAPIError(f"Athena error {response.status}: {body}")
 
         return await response.json(content_type=None)
+
+    async def get_athena_message(self, dongle_id: str, service: str) -> Any:
+        """Get the latest message for a cereal service from the device via athena.
+
+        Returns None if the service isn't publishing.
+        """
+        response = await self.athena_rpc(
+            dongle_id,
+            "getMessage",
+            {"service": service, "timeout": 5000},
+            timeout=20,
+        )
+        return (response.get("result") or {}).get(service)

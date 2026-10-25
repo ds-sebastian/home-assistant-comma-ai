@@ -12,9 +12,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Streams start on demand and stop after 30 seconds without viewers
   - Snapshot and MJPEG support
   - `last_error` attribute explaining why a stream could not start
+- Car battery voltage sensor and car running binary sensor, read live from the device via athena (polled every 5 minutes, since it uses the device's own connection) (bscholer/home-assistant-comma-ai#7, thanks @georgegebbett)
+- Reauth flow: an expired JWT token now prompts to re-authenticate instead of failing setup (bscholer/home-assistant-comma-ai#7)
 
 ### Changed
 - Requires Home Assistant 2025.12 or newer (for aiortc's PyAV requirement)
+
+### Fixed
+- API errors raised inside the coordinator's task group are now reported correctly (bscholer/home-assistant-comma-ai#7)
+- Accounts without a username fall back to email or user ID for the entry title (bscholer/home-assistant-comma-ai#7)
+- Removed the deprecated `battery_level` override from the device tracker, unsupported from Home Assistant 2027.7 (bscholer/home-assistant-comma-ai#5, bscholer/home-assistant-comma-ai#6)
 
 ## [1.0.0] - 2025-10-26
 
